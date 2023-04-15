@@ -158,88 +158,7 @@ router.post("/savenotes", async (req, res) => {
   return res.json(newAnalysis);
 });
 
-//do a sentimental analysis on the chats of a particular user saved in the Analysis model
-let p = 0,
-  n = 0,
-  neg = 0,
-  len = 0;
-router.get("/analyze", async (req, res) => {
-  const final = [];
-  Analysis.find(
-    { id: "643a81902386a39c2ab5c5bd" },
-    { sessionNotes: 1, _id: 0 },
-    function (err, result) {
-      if (err) {
-        console.log(err);
-      } else {
-        result.forEach((item) => {
-          final.push(item.sessionNotes[0]);
-        });
-        console.log(final);
-        // Do whatever you need with the 'final' array here
-      }
-    }
-  );
-  data = final;
-  console.log(data);
-  len = data.length;
-  data.forEach((ele) => {
-    ele.arrayMessage.forEach((ele2) => {
-      console.log(ele2);
-      const options = {
-        method: "POST",
-        url: "https://sentiment-analysis18.p.rapidapi.com/service/sentiment-analysis",
-        headers: {
-          "content-type": "application/json",
-          "X-RapidAPI-Key":
-            "6c4088c4b3msh43af8160c1bf5b8p1584a8jsn2b35b8442fd1",
-          "X-RapidAPI-Host": "sentiment-analysis18.p.rapidapi.com",
-        },
-        data: '{"text":"Hello there! I love this!"}',
-      };
 
-      axios
-        .request(options)
-        .then(function (response) {
-          //   console.log(response.data.type);
-          if (response.data.type == "positive") {
-            p++;
-          } else if (response.data.type == "negative") {
-            neg++;
-          } else {
-            n++;
-          }
-          //   console.log({p,n,neg});
-        })
-        .catch(function (error) {
-          console.error(error);
-        });
-    });
-    console.log({ p, n, neg });
-  });
-});
-
-//generate a report for the therapist
-router.get("/report", async (req, res) => {
-  let mood = "";
-  let a = (len / p) * 100,
-    b = (len / n) * 100,
-    c = (len / neg) * 100;
-  if (a > b && a > c) {
-    mood = "Positive";
-  } else if (b > a && b > c) {
-    mood = "Neutral";
-  } else {
-    mood = "Negative";
-  }
-  const report = {
-    mood,
-    positive: a,
-    neutral: b,
-    negative: c,
-  };
-  return res.json(report);
-});
 
 router.post("/update_preferences", async (req, res) => {
   const { details, user_id } = req.body;
@@ -290,5 +209,80 @@ router.post("/get-appointment_therapist", async (req, res) => {
     });
   }
 });
+
+
+
+//do a sentimental analysis on the chats of a particular user saved in the Analysis model
+let p=0,n=0,neg=0,len=0;
+router.get("/analyze",async(req,res)=>{
+	const final = [];
+	Analysis.find({ id: "643abbfdfc43f7eceb590dfd" }, { sessionNotes: 1, _id: 0 }, function(err, result) {
+	  if (err) {
+		console.log(err);
+	  } else {
+		result.forEach((item) => {
+		  final.push(item.sessionNotes[0]);
+		});
+		len=final.length;
+		let str="";
+			let t =final[len-1].trim();
+			str+=(t+' ')
+			const options = {
+				method: 'POST',
+				url: 'https://text-analysis12.p.rapidapi.com/sentiment-analysis/api/v1.1',
+				headers: {
+				  'content-type': 'application/json',
+				  'X-RapidAPI-Key': '6c4088c4b3msh43af8160c1bf5b8p1584a8jsn2b35b8442fd1',
+				  'X-RapidAPI-Host': 'text-analysis12.p.rapidapi.com'
+				},
+				data: `{"language":"english","text":"${str}"}` 
+			  };
+			  axios.request(options).then(function (response) {
+				return res.json({
+				"sentiment":response.data.sentiment,
+				"positive":response.data.aggregate_sentiment.pos,
+				"negative":response.data.aggregate_sentiment.neg,
+				"neutral":response.data.aggregate_sentiment.neu
+			});
+			  }).catch(function (error) {
+				  console.error(error);
+			  });
+		
+		
+	  }
+	});
+
+ 
+});
+
+router.post("/journalentry", async (req, res) => {
+	const { _id, journaling } = req.body;
+  
+	const newJournal = new Journal({
+	  id: _id,
+	  sessionNotes: journaling
+	});
+  
+	await newJournal.save();
+  
+	return res.json(newJournal);
+  });
+  
+ //get journal entry
+  router.get("/getjournalentry", async (req, res) => {
+	const final = [];
+	Journal.find({ id: "643abbfdfc43f7eceb590dfd" }, { sessionNotes: 1, _id: 0 }, function(err, result) {
+			  if (err) {
+				console.log(err);
+			  } else {
+				result.forEach((item) => {
+					
+				  final.push(item.sessionNotes);
+				});
+				return res.json(final.flat());
+			}	
+	});
+});
+
 
 module.exports = router;
