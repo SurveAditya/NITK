@@ -18,7 +18,7 @@ app.use(require("./middlewares/auth"));
 
 //mongoose.connect('mongodb+srv://admin:admin@cluster0.mw0wlrm.mongodb.net/?retryWrites=true&w=majority')
 mongoose.connect(
-  "mongodb+srv://root:root@cluster0.uv6ej70.mongodb.net/?retryWrites=true&w=majority"
+  "mongodb+srv://admin:admin@cluster0.dntgrq1.mongodb.net/?retryWrites=true&w=majority"
 );
 
 var db = mongoose.connection;
